@@ -139,8 +139,13 @@ class LogStash::Outputs::Http < LogStash::Outputs::Base
       if key.nil? or key.empty?
       elsif key =~ /^@/
       elsif !value.nil? and value.is_a?(Hash)
-        escaped_value = CGI.escape(flatten(value).to_s)
-        CGI.escape(key) + "=" + escaped_value + "\n"
+        if key =~ /DEVICE_FEATURES/
+          escaped_value = CGI.escape(flatten_without_boolean_value(value).to_s)
+          CGI.escape(key) + "=" + escaped_value + "\n"
+        else
+          escaped_value = CGI.escape(flatten(value).to_s)
+          CGI.escape(key) + "=" + escaped_value + "\n"
+        end
       else
         escaped_value = CGI.escape(value.to_s)
         CGI.escape(key) + "=" + escaped_value
@@ -148,6 +153,25 @@ class LogStash::Outputs::Http < LogStash::Outputs::Base
 
     end.join("&")
   end # def encode
+
+  def flatten_without_boolean_value(parent=nil, hash)
+    return hash.map {|k, v|
+      if k.nil? or k.empty?
+      else
+        v.is_a?(Hash) ?
+          parent.nil? ? flatten_without_boolean_value(k, v) : flatten_without_boolean_value("#{parent}.#{k}", v) :
+          if (v == true)
+            parent.nil? ? "#{k}" : "#{parent}.#{k}"
+          else
+            if k == "glEsVersion"
+              parent.nil? ? "#{k} = #{v}" : "#{parent}.#{k} = #{v}"
+            else
+              parent.nil? ? "#{k}=#{v}" : "#{parent}.#{k}=#{v}"
+            end
+          end
+      end
+    }.reject(&:nil?).join("\n")
+  end
 
   def flatten(parent=nil, hash)
     return hash.map {|k, v|
