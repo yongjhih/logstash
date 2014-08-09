@@ -137,7 +137,7 @@ class LogStash::Outputs::Http < LogStash::Outputs::Base
 
   def encode(hash)
     return hash.collect do |key, value|
-      CGI.escape(key) + "=" + CGI.escape(value)
+      CGI.escape(key) + "=" + CGI.escape(value.to_s)
     end.join("&")
   end # def encode
 end
