@@ -137,7 +137,15 @@ class LogStash::Outputs::Http < LogStash::Outputs::Base
 
   def encode(hash)
     return hash.collect do |key, value|
-      CGI.escape(key) + "=" + CGI.escape(value.to_s)
+      CGI.escape(key) + CGI.escape(" ") + "=" + value.nil? ? "" : CGI.escape(" ") + CGI.escape(flatten(value))
     end.join("&")
   end # def encode
+
+  def flatten(parent=nil, hash)
+    hash.map {|k, v|
+      v.is_a?(Hash) ?
+        parent.nil? ? flatten(k, v) : flatten("#{parent}.#{k}", v) :
+      parent.nil? ? "#{k}=#{v}" : "#{parent}.#{k}=#{v}"
+    }
+  end
 end
