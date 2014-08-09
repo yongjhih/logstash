@@ -138,6 +138,7 @@ class LogStash::Outputs::Http < LogStash::Outputs::Base
     return hash.map do |key, value|
       if key.nil? or key.empty?
       elsif key =~ /^@/
+      elsif key == "type"
       elsif !value.nil? and value.is_a?(Hash)
         if key =~ /DEVICE_FEATURES/
           escaped_value = CGI.escape(flatten_without_boolean_value(value).to_s)
