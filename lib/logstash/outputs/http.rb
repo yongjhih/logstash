@@ -116,6 +116,12 @@ class LogStash::Outputs::Http < LogStash::Outputs::Base
     request["Content-Type"] = @content_type
 
     begin
+      evt.delete('type')
+      evt.delete_if{ |key|
+          if key =~ /^@/
+              key
+          end
+      }
       if @format == "json"
         request.body = evt.to_json
       elsif @format == "message"
@@ -138,11 +144,42 @@ class LogStash::Outputs::Http < LogStash::Outputs::Base
     end
   end # def receive
 
+  def reject(hash)
+    hash.delete_if{ |key|
+      if key =~ /^@/
+        key
+      elsif key == "type"
+        key
+      end
+    }
+  end
+
+  def returning(value)
+    yield(value)
+    value
+  end
+
+  def sort(object, deep = false)
+    #return hash.keys.sort.map {|k| [k, hash[k]]}
+  # from http://seb.box.re/2010/1/15/deep-hash-ordering-with-ruby-1-8/
+    if object.is_a?(Hash)
+      # Hash is ordered in Ruby 1.9!
+      res = returning(Hash.new) do |map|
+        object.each {|k, v| map[k] = deep ? sort(v, deep) : v }
+      end
+      return res.class[res.sort {|a, b| a[0].to_s <=> b[0].to_s } ]
+    elsif deep && object.is_a?(Array)
+      array = Array.new
+      object.each_with_index {|v, i| array[i] = sort(v, deep) }
+      return array
+    else
+      return object
+    end
+  end
+
   def encode(hash)
     return hash.map do |key, value|
       if key.nil? or key.empty?
-      elsif key =~ /^@/
-      elsif key == "type"
       elsif !value.nil? and value.is_a?(Hash)
         if key =~ /DEVICE_FEATURES/
           escaped_value = CGI.escape(flatten_without_boolean_value(value).to_s)
