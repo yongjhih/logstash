@@ -142,10 +142,10 @@ class LogStash::Outputs::Http < LogStash::Outputs::Base
       elsif !value.nil? and value.is_a?(Hash)
         if key =~ /DEVICE_FEATURES/
           escaped_value = CGI.escape(flatten_without_boolean_value(value).to_s)
-          CGI.escape(key) + "=" + escaped_value + "\n"
+          "\n" + CGI.escape(key) + "=" + escaped_value + "\n"
         else
           escaped_value = CGI.escape(flatten(value).to_s)
-          CGI.escape(key) + "=" + escaped_value + "\n"
+          "\n" + CGI.escape(key) + "=" + escaped_value + "\n"
         end
       else
         escaped_value = CGI.escape(value.to_s)
