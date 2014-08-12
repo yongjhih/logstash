@@ -102,10 +102,6 @@ class LogStash::Outputs::Http < LogStash::Outputs::Base
     else
       @logger.error("Unknown verb:", :verb => @http_method)
     end
-
-    #request["User-Agent"] = "Mozilla/5.0 (Linux; Android 4.3) AppleWebkit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30"
-    request["User-Agent"] = "Android"
-    request["Accept"] = "text/html,application/xml,application/json,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5"
     
     if @headers
       @headers.each do |k,v|
