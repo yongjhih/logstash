@@ -115,13 +115,14 @@ class LogStash::Outputs::Http < LogStash::Outputs::Base
 
     request["Content-Type"] = @content_type
 
+    evt.delete("type")
+    evt.delete_if{ |key|
+      if key =~ /^@/
+        key
+      end
+    }
+
     begin
-      evt.delete('type')
-      evt.delete_if{ |key|
-          if key =~ /^@/
-              key
-          end
-      }
       if @format == "json"
         request.body = evt.to_json
       elsif @format == "message"
@@ -143,6 +144,14 @@ class LogStash::Outputs::Http < LogStash::Outputs::Base
       @logger.warn("Unhandled exception", :request => request, :response => response, :exception => e, :stacktrace => e.backtrace)
     end
   end # def receive
+
+  # http://stackoverflow.com/posts/3201966/revisions
+  def delete(hash, to_remove)
+      hash.delete(to_remove)
+      hash.each_value do |value|
+          delete(value, to_remove) if value.is_a? Hash
+      end
+  end
 
   def reject(hash)
     hash.delete_if{ |key|
