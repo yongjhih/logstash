@@ -19,6 +19,12 @@ class LogStash::Outputs::Http < LogStash::Outputs::Base
   # validate SSL?
   config :verify_ssl, :validate => :boolean, :default => true
 
+  # acra
+  config :acra, :validate => :boolean, :default => false
+
+  # remove keys
+  config :remove_keys, :validate => :array
+
   # What verb to use
   # only put and post are supported for now
   config :http_method, :validate => ["put", "post"], :required => :true
@@ -111,12 +117,18 @@ class LogStash::Outputs::Http < LogStash::Outputs::Base
 
     request["Content-Type"] = @content_type
 
-    evt.delete("type")
-    evt.delete_if{ |key|
-      if key =~ /^@/
-        key
-      end
-    }
+    if @acra
+      evt.delete("type")
+      evt.delete_if{ |key|
+        if key =~ /^@/
+          key
+        end
+      }
+    end
+
+    if @remove_keys
+      evt.delete_if { |k, v| @remove_keys.include? k }
+    end
 
     begin
       if @format == "json"
